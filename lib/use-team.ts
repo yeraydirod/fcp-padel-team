@@ -18,8 +18,14 @@ const fetcher = async ([url]: [string]): Promise<TeamData> => {
   })
 
   if (!res.ok) {
-    const payload = await res.json().catch(() => ({}))
-    throw new Error(payload.error || 'No se pudieron cargar los datos del equipo.')
+    const payload = (await res.json().catch(() => ({}))) as {
+      error?: string
+      details?: string
+    }
+    const message = payload.details
+      ? `${payload.error ?? 'Error al cargar el equipo'} (${payload.details})`
+      : payload.error || 'No se pudieron cargar los datos del equipo.'
+    throw new Error(message)
   }
 
   return res.json()

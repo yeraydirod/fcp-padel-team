@@ -4,6 +4,8 @@ import type { Player, TeamData } from './types'
 export const FEDERATION_URL =
   'https://padelfederacion.es/Paginas/Canarias/Ligas_Equipo.asp?IdEquipo=159321&Liga=28080'
 
+const FETCH_TIMEOUT_MS = 12_000
+
 function toTitleCase(input: string): string {
   return input
     .toLowerCase()
@@ -25,13 +27,36 @@ function extractField(text: string, label: string): string {
 }
 
 export async function scrapeTeam(url: string): Promise<TeamData> {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-    },
-    next: { revalidate: 3600 },
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+  let res: Response
+  try {
+    res = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+        Referer: 'https://padelfederacion.es/',
+      },
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('La federación no respondió a tiempo.')
+    }
+    const cause = error instanceof Error && 'cause' in error ? String(error.cause) : ''
+    throw new Error(
+      `No se pudo conectar con la federación.${cause ? ` (${cause})` : ''}`,
+    )
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (!res.ok) {
     throw new Error(`La federación respondió con estado ${res.status}`)
@@ -92,6 +117,10 @@ export async function scrapeTeam(url: string): Promise<TeamData> {
         })
       })
   })
+
+  if (!equipo && jugadores.length === 0) {
+    throw new Error('La página de la federación no devolvió datos de equipo reconocibles.')
+  }
 
   return { equipo, liga, categoria, capitan, jugadores }
 }
