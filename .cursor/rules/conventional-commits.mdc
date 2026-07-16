@@ -1,0 +1,50 @@
+---
+description: Use Conventional Commits for all git commit messages
+alwaysApply: true
+---
+
+# Conventional Commits
+
+All commit messages MUST follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+## Format
+
+```
+type(optional-scope): short description
+
+optional body
+```
+
+- **Subject in English**, imperative mood, no trailing period.
+- Keep the subject under ~72 characters.
+- Body (optional) can be Spanish or English; explain *why*, not only *what*.
+
+## Types
+
+| Type | Use when |
+|------|----------|
+| `feat` | New user-facing capability |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting; no logic change |
+| `refactor` | Code change that is not feat/fix |
+| `perf` | Performance improvement |
+| `test` | Adding or updating tests |
+| `chore` | Tooling, deps, config, repo hygiene |
+| `build` | Build system or bundler |
+| `ci` | CI configuration |
+
+## Examples
+
+```
+feat: add pair simulator ranking by points
+fix: preserve simulator state when switching tabs
+docs: add local setup and Firebase env vars to README
+chore: strengthen gitignore for env files
+```
+
+## Do not
+
+- Use vague subjects (`update`, `changes`, `wip`).
+- Put secrets or `.env` values in the commit message.
+- Skip the type prefix.
